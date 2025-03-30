@@ -12,6 +12,7 @@
 #include "drop_nullopt.h"
 #include "aggregate.h"
 #include "open_files.h"
+#include "split_expected.h"
 
 template <typename Key, typename Value>
 struct KV {

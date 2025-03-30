@@ -46,19 +46,15 @@ public:
     using difference_type = std::ptrdiff_t;
     using value_type = std::string;
     using pointer = const value_type*;
-    using reference = const value_type&;
+    using reference = value_type&;
     using iterator_category = std::forward_iterator_tag;
 
-    SplitViewIterator(Range& range, std::string pred, bool is_end = false) : pred_(pred), substr_(""), is_end_(is_end) {
-        begin_ = range.begin();
-        end_ = range.end();
-        istream_begin_ = std::istreambuf_iterator<char>(*begin_);
-        istream_end_ = std::istreambuf_iterator<char>();
+    SplitViewIterator(Range& range, std::string pred, bool is_end = false) : begin_(range.begin()), end_(range.end()), 
+    istream_begin_(std::istreambuf_iterator<char>(*begin_)), istream_end_(std::istreambuf_iterator<char>()), pred_(pred), 
+    substr_(""), is_end_(is_end) { 
         if (is_end) {
             begin_ = range.end();
-            end_ = range.end();
             istream_begin_ = std::istreambuf_iterator<char>();
-            istream_end_ = std::istreambuf_iterator<char>();
         }
     }
 

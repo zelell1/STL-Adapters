@@ -13,10 +13,10 @@ private:
     iterator end_;
 
 public:
-    using difference_type = iterator::difference_type;
-    using value_type =  iterator_value_type<iterator>;
-    using pointer = iterator::pointer;
-    using reference = iterator::reference;
+    using difference_type = typename std::iterator_traits<iterator>::difference_type;
+    using value_type = iterator_value_type<iterator>;
+    using pointer = typename std::iterator_traits<iterator>::pointer;
+    using reference = typename std::iterator_traits<iterator>::reference;
     using iterator_category = std::input_iterator_tag;
 
     AsDataFlowIterator(iterator begin, iterator end) : begin_(begin), end_(end) {};
@@ -62,10 +62,10 @@ public:
     AsDataFlow(Range& range) : range_(range) {};
 
     auto begin() const {
-        return AsDataFlowIterator<Range>(std::begin(range_), std::end(range_));
+        return AsDataFlowIterator<Range>(range_.begin(), range_.end());
     }
 
     auto end() const {
-        return AsDataFlowIterator<Range>(std::end(range_),  std::end(range_));
+        return AsDataFlowIterator<Range>(range_.end(), range_.end());
     }
 };

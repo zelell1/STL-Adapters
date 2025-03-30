@@ -12,12 +12,13 @@ private:
     GetKey get_key_;
 
 public:
-    AggregateByKey(InitialValue init, Aggregator aggregator, GetKey get_key)
-        : init_(init), aggregator_(aggregator), get_key_(get_key) {}
+    explicit AggregateByKey(InitialValue init, Aggregator aggregator, GetKey get_key)
+                : init_(init), aggregator_(aggregator), get_key_(get_key) {};
 
     template <typename Range>
     auto operator()(Range&& range) {
-        using key_type = decltype(get_key_(*range.begin()));
+        using elem_type = range_value_type<Range>;
+        using key_type = std::decay_t<std::invoke_result_t<GetKey, elem_type>>;
         std::unordered_map<key_type, InitialValue> collect_values;
         std::vector<key_type> order;
         for (auto el : range) {

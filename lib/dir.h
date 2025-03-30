@@ -18,16 +18,15 @@ public:
     using iterator_category = std::input_iterator_tag;
 
     DirIterator(const Path& path, bool recursive = false) {
-        if (recursive) {
+        if (recursive)
             it_ = std::filesystem::recursive_directory_iterator(path);
-        } else {
+        else
             it_ = std::filesystem::directory_iterator(path);
-        }
     };
 
-    DirIterator(DirIterator const& other) : it_(other.it_) {};
-
+    DirIterator(const DirIterator& other) : it_(other.it_) {};
     DirIterator() : it_(std::filesystem::directory_iterator()) {};
+
 
     DirIterator& operator++() {
         std::visit([](auto& it) { ++it; }, it_);
@@ -64,7 +63,7 @@ private:
     bool recursive_;
     
 public: 
-    using value_type = std::filesystem::path;
+    using value_type = Path;
 
     explicit Dir(const Path& path, bool recursive = false) : path_(path), recursive_(recursive) {};
 

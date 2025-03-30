@@ -79,13 +79,14 @@ public:
 template <typename Pred>
 class Filter {
 private:
-    Pred pred_;
+    using DecayedPred = std::decay_t<Pred>;
+    DecayedPred pred_;
 
 public:
     explicit Filter(const Pred& pred) : pred_(pred) {};
 
     template <typename Range>
     auto operator()(Range&& range) {
-        return FilterView<Range, Pred>(range, pred_);
+        return FilterView<Range, DecayedPred>(range, pred_);
     }
 };

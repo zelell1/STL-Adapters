@@ -63,7 +63,7 @@ public:
     }
 
     bool operator==(const OpenFilesIterator& other) const {
-        return (begin_ == other.begin_ && end_ == other.end_ && curr_file_ != other.curr_file_);
+        return (begin_ == other.begin_ && end_ == other.end_ && curr_file_ == other.curr_file_);
     }
 
     bool operator!=(const OpenFilesIterator& other) const {

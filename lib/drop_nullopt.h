@@ -19,14 +19,13 @@ public:
     using reference = const value_type&;
     using iterator_category = std::forward_iterator_tag;
 
-    DropNulloptIterator(Range& range, bool end = false)
-        : begin_(range.begin()), end_(range.end()) {
+    DropNulloptIterator(Range& range, bool end = false) : begin_(range.begin()), end_(range.end()) {
         if (!end) {
             begin_ = std::find_if(begin_, end_, pred_);
         } else {
             begin_ = end_;
         }
-    }
+    };
 
     DropNulloptIterator& operator++() {
         ++begin_;
