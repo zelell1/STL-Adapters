@@ -1,6 +1,6 @@
 #pragma once
 
-#include <veiw.h>
+#include "veiw.h"
 #include <optional>
 #include <algorithm>
 
@@ -10,7 +10,12 @@ private:
     using iterator = iterator_type<Range>;
     iterator begin_;
     iterator end_;
-    static constexpr auto pred_ = [](const auto& x) { return x.has_value(); };
+    
+    struct Predicate {
+        auto operator()(const auto& value) {
+            return value.has_value();
+        }
+    } pred_;
 
 public:
     using difference_type = std::ptrdiff_t;
@@ -39,11 +44,11 @@ public:
         return temp;
     }
 
-    reference operator*() {
+    reference operator*() const {
         return **begin_; 
     }
 
-    pointer operator->() {
+    pointer operator->() const {
         return &(**begin_);
     }
 

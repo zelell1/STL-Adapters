@@ -28,20 +28,24 @@ private:
             }
         }
     }
+
 public:
     using difference_type = iterator::difference_type; 
     using value_type = std::ifstream;                                
-    using pointer = std::ifstream*;                              
+    using pointer = std::shared_ptr<std::ifstream>;                              
     using reference = std::ifstream&;                                 
     using iterator_category = std::input_iterator_tag;
 
-    explicit OpenFilesIterator(const Range& range, bool is_end = false) : begin_(range.begin()), end_(range.end()), curr_file_(nullptr) {
+    OpenFilesIterator(const Range& range, bool is_end = false) : begin_(range.begin()), 
+    end_(range.end()), curr_file_(nullptr) {
         if (is_end) {
             begin_ = range.end();
         }
-    }
+        GetFile();
+    };
 
-    explicit OpenFilesIterator(const OpenFilesIterator& other) : begin_(other.begin_), end_(other.end_), curr_file_(other.curr_file_) {}
+    OpenFilesIterator(const OpenFilesIterator& other) : begin_(other.begin_), end_(other.end_), 
+    curr_file_(other.curr_file_) {};
 
     OpenFilesIterator& operator++() {
         ++begin_;     
@@ -50,16 +54,17 @@ public:
     }
 
     OpenFilesIterator operator++(int) {
-        OpenFilesIterator temp(*this);
+        OpenFilesIterator tmp(*this);
         ++(*this);
-        return *temp;
+        return tmp;
     }
 
-    reference operator*() {
-        if (!curr_file_) {  
-            GetFile();
-        }
+    reference operator*() const {
         return *curr_file_;
+    }
+
+    pointer operator->() const {
+        return curr_file_;
     }
 
     bool operator==(const OpenFilesIterator& other) const {
@@ -74,12 +79,12 @@ public:
 template <typename Range>
 class OpenFilesView {
 private:
-    Range range_;
+    Range& range_;
 
 public:
     using value_type = std::ifstream;
 
-    explicit OpenFilesView(const Range& range) : range_(range) {};
+    OpenFilesView(Range& range) : range_(range) {};
 
     auto begin() const {
         return OpenFilesIterator<Range>(range_);

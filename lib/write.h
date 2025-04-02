@@ -9,7 +9,7 @@ private:
     char delim_;
 
 public:
-    explicit Write(OutStream& stream, const char& delim) : stream_(stream), delim_(delim) {};
+    Write(OutStream& stream, const char& delim) : stream_(stream), delim_(delim) {};
 
     template <typename Range>
     auto operator()(Range&& range) {

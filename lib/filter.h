@@ -11,20 +11,20 @@ private:
     Pred pred_;
 
 public:
-    using difference_type = std::ptrdiff_t;
+    using difference_type = std::ptrdiff_t;     
     using value_type =  iterator_value_type<iterator>;
     using pointer = const value_type*;
-    using reference = const value_type&;
+    using reference = const value_type;
     using iterator_category = std::forward_iterator_tag;
 
     FilterIterator(Range& range, const Pred& pred, bool end = false) : begin_(range.begin()), end_(range.end()), pred_(pred) {
         if (end) {
             begin_ = end_;
         }
+        begin_ = std::find_if(begin_, end_, pred_);
     };
 
     FilterIterator& operator++() {
-        begin_ = std::find_if(begin_, end_, pred_);
         ++begin_;
         begin_ = std::find_if(begin_, end_, pred_);
         return *this;
@@ -36,18 +36,16 @@ public:
         return temp;
     }
 
-    reference operator*() {
-        begin_ = std::find_if(begin_, end_, pred_);
+    reference operator*() const {
         return *begin_;
     }
 
-    pointer operator->() {
-        begin_ = std::find_if(begin_, end_, pred_);
+    pointer operator->() const {
         return &(*begin_);
     }
 
     bool operator==(const FilterIterator& other) const {
-        return (begin_ == other.begin_ && end_ == other.end_ && pred_ == other.pred_);
+        return (begin_ == other.begin_ && end_ == other.end_);
     }
 
     bool operator!=(const FilterIterator& other) const {
@@ -65,7 +63,7 @@ private:
 public:
     using value_type = range_value_type<Range>;
 
-    FilterView(const Range& range, const Pred& pred) : range_(range), pred_(pred) {};
+    FilterView(Range& range, const Pred& pred) : range_(range), pred_(pred) {};
 
     auto begin() const {
         return FilterIterator<Range, Pred>(range_, pred_);
@@ -83,7 +81,7 @@ private:
     DecayedPred pred_;
 
 public:
-    explicit Filter(const Pred& pred) : pred_(pred) {};
+    Filter(const Pred& pred) : pred_(pred) {};
 
     template <typename Range>
     auto operator()(Range&& range) {

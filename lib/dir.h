@@ -7,7 +7,8 @@
 template <typename Path = std::filesystem::path>
 class DirIterator {
 private:
-    using iterator = std::variant<std::filesystem::directory_iterator, std::filesystem::recursive_directory_iterator>;
+    using iterator = std::variant<std::filesystem::directory_iterator, 
+                        std::filesystem::recursive_directory_iterator>;
     iterator it_;
 
 public:
@@ -25,7 +26,13 @@ public:
     };
 
     DirIterator(const DirIterator& other) : it_(other.it_) {};
-    DirIterator() : it_(std::filesystem::directory_iterator()) {};
+    DirIterator(bool recursive) {
+        if (recursive) {
+            it_ = std::filesystem::recursive_directory_iterator();
+        } else {
+            it_ = std::filesystem::directory_iterator();
+        }
+    };
 
 
     DirIterator& operator++() {
@@ -40,11 +47,11 @@ public:
     }
 
     reference operator*() const {
-        return std::visit([](const auto& it) -> reference { return *it; }, it_);
+        return std::visit([](const auto& it) { return *it; }, it_);
     }
 
     pointer operator->() const {
-        return std::visit([](const auto& it) -> pointer { return &(*it); }, it_);
+        return std::visit([](const auto& it) { return &(*it); }, it_);
     }
 
     bool operator==(const DirIterator& other) const {
@@ -65,13 +72,13 @@ private:
 public: 
     using value_type = Path;
 
-    explicit Dir(const Path& path, bool recursive = false) : path_(path), recursive_(recursive) {};
+    Dir(const Path& path, bool recursive = false) : path_(path), recursive_(recursive) {};
 
     auto begin() const { 
         return DirIterator<Path>(path_, recursive_); 
     }
 
     auto end() const { 
-        return DirIterator<Path>(); 
+        return DirIterator<Path>(recursive_); 
     }
 };

@@ -2,138 +2,163 @@
 
 #include "veiw.h"
 #include <expected>
-#include <tuple>
+#include <iterator>
 #include <utility>
-#include <type_traits>
-
-template <typename Range>
-class UnexpectedIterator {
-private:
-    using iterator = iterator_type<Range>;
-    iterator current_;
-    iterator end_;
-    void skip() {
-        while (current_ != end_ && static_cast<bool>(*current_))
-            ++current_;
-    }
-public:
-    using value_type = std::remove_reference_t<decltype((*current_).error())>;  
-
-    UnexpectedIterator(iterator begin, iterator end)
-        : current_(begin), end_(end) {
-        skip();
-    }
-
-    UnexpectedIterator& operator++() {
-        ++current_;
-        skip();
-        return *this;
-    }
-
-    auto operator*() const -> value_type {
-        return (*current_).error(); 
-    }
-
-    struct arrow_proxy {
-        value_type val;
-        explicit arrow_proxy(value_type v) : val(v) {}
-        const value_type* operator->() const { return &val; }
-    };
-
-    auto operator->() const -> arrow_proxy {
-        return arrow_proxy(operator*());
-    }
-
-    bool operator==(const UnexpectedIterator& other) const {
-        return current_ == other.current_;
-    }
-
-    bool operator!=(const UnexpectedIterator& other) const {
-        return !(*this == other);
-    }
-};
 
 template <typename Range>
 class ExpectedIterator {
 private:
     using iterator = iterator_type<Range>;
-    iterator current_;
-    iterator end_;
-    void skip() {
-        while (current_ != end_ && !static_cast<bool>(*current_))
-            ++current_;
-    }
-public:
-    using value_type = std::remove_reference_t<decltype((*current_).value())>;  
 
-    ExpectedIterator(iterator begin, iterator end)
-        : current_(begin), end_(end) {
-        skip();
+    mutable iterator begin_;
+    iterator end_;
+
+    void GetExpected() const {
+        while (begin_ != end_ && !begin_->has_value()) {
+            ++begin_;
+        }
+    }
+
+public:
+    using value_type = typename std::iterator_traits<iterator>::value_type::value_type;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type*;
+    using reference = const value_type&;
+    using iterator_category = std::forward_iterator_tag;
+
+    ExpectedIterator(const Range& range, bool is_end = false) : begin_(is_end ? range.end() : range.begin()), 
+    end_(range.end()) {};
+
+    auto operator*() const {
+        GetExpected(); 
+        if (!begin_->has_value()) {
+            return value_type();
+        }
+        return begin_->value(); 
+    }
+
+    auto operator->() const { 
+        return &(begin_->value()); 
     }
 
     ExpectedIterator& operator++() {
-        ++current_;
-        skip();
+        ++begin_;
+        GetExpected();
         return *this;
     }
 
-    auto operator*() const -> value_type {
-        return (*current_).value();  
+    ExpectedIterator operator++(int) {
+        ExpectedIterator temp(*this);
+        ++(*this);
+        return temp;
     }
 
-    struct arrow_proxy {
-        value_type val;
-        explicit arrow_proxy(value_type v) : val(v) {}
-        const value_type* operator->() const { return &val; }
-    };
-
-    auto operator->() const -> arrow_proxy {
-        return arrow_proxy(operator*());
+    bool operator==(const ExpectedIterator& other) const { 
+        return begin_ == other.begin_; 
     }
 
-    bool operator==(const ExpectedIterator& other) const {
-        return current_ == other.current_;
-    }
-
-    bool operator!=(const ExpectedIterator& other) const {
-        return !(*this == other);
+    bool operator!=(const ExpectedIterator& other) const { 
+        return begin_ != other.begin_;
     }
 };
 
-
 template <typename Range>
-class UnexpectedView : public ViewInterface<UnexpectedView<Range>> {
+class UnexpectedIterator {
 private:
-    Range& range_;
+    using iterator = iterator_type<Range>;
+
+    mutable iterator begin_;
+    iterator end_;
+
+    void GetUnexpected() const {
+        while (begin_ != end_ && begin_->has_value()) {
+            ++begin_;
+        }
+    }
+
 public:
-    explicit UnexpectedView(Range& range) : range_(range) {}
-    auto begin() const {
-        return UnexpectedIterator<Range>(range_.begin(), range_.end());
+    using value_type = typename std::iterator_traits<iterator>::value_type::error_type;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type*;
+    using reference = const value_type&;
+    using iterator_category = std::forward_iterator_tag;
+
+    UnexpectedIterator(const Range& range, bool is_end = false) : begin_(is_end ? range.end() : range.begin()), 
+    end_(range.end()) {};
+
+    UnexpectedIterator& operator++() {
+        ++begin_;
+        GetUnexpected();
+        return *this;
     }
-    auto end() const {
-        return UnexpectedIterator<Range>(range_.end(), range_.end());
+
+    UnexpectedIterator operator++(int) {
+        UnexpectedIterator temp(*this);
+        ++(*this);
+        return temp;
     }
+
+    auto operator*() const {
+        GetUnexpected();
+        if (begin_->has_value()) {
+            return value_type();
+        }
+        return begin_->error(); 
+    }
+
+    auto operator->() const { 
+        return &(begin_->error()); 
+    }
+
+    bool operator==(const UnexpectedIterator& other) const { 
+        return begin_ == other.begin_ ; 
+    }
+
+    bool operator!=(const UnexpectedIterator& other) const { 
+        return begin_ != other.begin_; 
+    }
+
 };
 
 template <typename Range>
 class ExpectedView : public ViewInterface<ExpectedView<Range>> {
 private:
     Range& range_;
+    
 public:
-    explicit ExpectedView(Range& range) : range_(range) {}
-    auto begin() const {
-        return ExpectedIterator<Range>(range_.begin(), range_.end());
+    ExpectedView(Range& range) : range_(range) {};
+
+    auto begin() const { 
+        return ExpectedIterator<Range>(range_); 
     }
-    auto end() const {
-        return ExpectedIterator<Range>(range_.end(), range_.end());
+
+    auto end() const { 
+        return ExpectedIterator<Range>(range_, true); 
     }
 };
 
-class SplitExpected {
+template <typename Range>
+class UnexpectedView : public ViewInterface<UnexpectedView<Range>> {
+private:
+    Range& range_;
+
 public:
+    UnexpectedView(Range& range) : range_(range) {}
+
+    auto begin() const { 
+        return UnexpectedIterator<Range>(range_); 
+    }
+
+    auto end() const { 
+        return UnexpectedIterator<Range>(range_, true); 
+    }
+
+
+};
+
+struct SplitExpected {
     template <typename Range>
-    static auto operator()(Range& range) {
-        return std::make_pair(UnexpectedView<Range>(range),
-                              ExpectedView<Range>(range));
+    auto operator()(Range&& range) const {
+        return std::make_pair(UnexpectedView<Range>(range), ExpectedView<Range>(range));
     }
 };

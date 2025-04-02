@@ -1,9 +1,6 @@
 #pragma once
 
 #include "veiw.h"
-#include <iterator>
-#include <type_traits>
-#include <utility>
 
 template <typename Range>
 class AsDataFlowIterator {
@@ -17,11 +14,9 @@ public:
     using value_type = iterator_value_type<iterator>;
     using pointer = typename std::iterator_traits<iterator>::pointer;
     using reference = typename std::iterator_traits<iterator>::reference;
-    using iterator_category = std::input_iterator_tag;
+    using iterator_category = std::forward_iterator_tag;
 
     AsDataFlowIterator(iterator begin, iterator end) : begin_(begin), end_(end) {};
-
-    AsDataFlowIterator() = default;
 
     AsDataFlowIterator& operator++() {
         ++begin_;

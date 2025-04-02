@@ -13,20 +13,10 @@
 #include "aggregate.h"
 #include "open_files.h"
 #include "split_expected.h"
-
-template <typename Key, typename Value>
-struct KV {
-	Key key;
-	Value value;
-};
-
-template <typename Base, typename Joined>
-struct JoinResult {
-	Base base;
-	std::optional<Joined> joined;
-};
+#include "join.h"
 
 template <typename Range, typename Adapter>
-decltype(auto) operator|(Range&& range, Adapter&& adapter) {
+auto operator|(Range&& range, Adapter&& adapter) {
     return adapter(range);
 }
+

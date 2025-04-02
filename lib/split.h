@@ -1,16 +1,13 @@
 #pragma once
 
 #include "veiw.h"
-#include <string>
-#include <iterator>
-#include <sstream>
-#include <vector>
 
 template <typename Range>
 class SplitViewIterator {
 private:
     using iterator = iterator_type<Range>;
     using stream_iterator = std::istreambuf_iterator<char>;
+    
     iterator begin_;
     iterator end_;
     stream_iterator istream_begin_;
@@ -21,24 +18,30 @@ private:
 
     void GetSubstr() {
         substr_.clear();
-        while (begin_ != end_) {
-            while (istream_begin_ != istream_end_ && pred_.find(*istream_begin_) != std::string::npos) {
+        if (is_end_ || (begin_ == end_ && istream_begin_ == istream_end_)) {
+            is_end_ = true;
+            return;
+        }
+        if (istream_begin_ == istream_end_) {
+            ++begin_;
+            if (begin_ != end_) {
+                begin_->clear();
+                begin_->seekg(0, std::ios::beg);
+                istream_begin_ = std::istreambuf_iterator<char>(*begin_);
+                istream_end_ = std::istreambuf_iterator<char>();
+            } else {
+                is_end_ = true;
+                return;
+            }
+        }
+        while (istream_begin_ != istream_end_) {
+            char c = *istream_begin_;
+            if (pred_.find(c) != std::string::npos) {
                 ++istream_begin_;
-            }
-            if (istream_begin_ == istream_end_) {
-                ++begin_;
-                if (begin_ != end_) {
-                    istream_begin_ = std::istreambuf_iterator<char>(*begin_);
-                    istream_end_ = std::istreambuf_iterator<char>();
-                }
-                continue;
-            }
-            while (istream_begin_ != istream_end_ && pred_.find(*istream_begin_) == std::string::npos) {
-                substr_.push_back(*istream_begin_);
-                ++istream_begin_;
-            }
-            if (!substr_.empty())
                 break;
+            }
+            substr_.push_back(c);
+            ++istream_begin_;
         }
     }
 
@@ -50,13 +53,16 @@ public:
     using iterator_category = std::forward_iterator_tag;
 
     SplitViewIterator(Range& range, std::string pred, bool is_end = false) : begin_(range.begin()), end_(range.end()), 
-    istream_begin_(std::istreambuf_iterator<char>(*begin_)), istream_end_(std::istreambuf_iterator<char>()), pred_(pred), 
-    substr_(""), is_end_(is_end) { 
-        if (is_end) {
-            begin_ = range.end();
-            istream_begin_ = std::istreambuf_iterator<char>();
+    istream_begin_(begin_ != end_ ? std::istreambuf_iterator<char>(*begin_) : std::istreambuf_iterator<char>()), 
+    istream_end_(std::istreambuf_iterator<char>()), pred_(pred), substr_(""), is_end_(is_end) {
+        if (!is_end && begin_ != end_) {
+            begin_->clear();
+            begin_->seekg(0, std::ios::beg);
+            istream_begin_ = std::istreambuf_iterator<char>(*begin_);
+            istream_end_ = std::istreambuf_iterator<char>();
+            GetSubstr(); 
         }
-    }
+    };
 
     SplitViewIterator& operator++() {
         GetSubstr();
@@ -69,15 +75,16 @@ public:
         return tmp;
     }
 
-    reference operator*() { 
-        if (substr_.empty()) {
-            GetSubstr();
-        }
+    value_type operator*() const { 
+        return substr_; 
+    }
+
+    value_type operator->() const { 
         return substr_; 
     }
 
     bool operator==(const SplitViewIterator& other) const {
-        return (begin_ == end_ && istream_begin_ == istream_end_);
+        return (is_end_ == other.is_end_ && (is_end_ || (begin_ == other.begin_ && istream_begin_ == other.istream_begin_)));
     }
 
     bool operator!=(const SplitViewIterator& other) const {
@@ -92,7 +99,7 @@ private:
     Pred pred_;
 
 public:
-    explicit SplitView(Range range, Pred pred) : range_(range), pred_(pred) {}
+    SplitView(Range& range, Pred pred) : range_(range), pred_(pred) {};
 
     auto begin() { 
         return SplitViewIterator<Range>(range_, pred_);
@@ -109,10 +116,10 @@ private:
     Pred pred_;
 
 public:
-    explicit Split(Pred pred) : pred_(pred) {}
+    Split(Pred pred) : pred_(pred) {};
 
     template <typename Range>
     auto operator()(Range&& range) {
-        return SplitView<Range, Pred>(std::forward<Range>(range), pred_);
+        return SplitView<Range, Pred>(range, pred_);
     }
 };

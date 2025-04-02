@@ -8,7 +8,7 @@ private:
     OutStream& stream_;
 
 public:
-    explicit Out(OutStream& stream) : stream_(stream) {};
+    Out(OutStream& stream) : stream_(stream) {};
 
     template <typename Range>
     auto operator()(Range&& range) {

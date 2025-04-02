@@ -66,3 +66,38 @@ TEST(AggregateByKeyTest, AggregatingWithSeveralOutputsForEachKey) {
         )
     );
 }
+
+TEST(AggregateByKeyTest, EmptyInput) {
+    std::vector<std::string> input{};
+    auto result =
+        AsDataFlow(input)
+            | AggregateByKey(
+                std::size_t{0},
+                [](const std::string&, std::size_t& accumulated) { ++accumulated; },
+                [](const std::string& token) { return token; }
+            )
+            | AsVector();
+    ASSERT_TRUE(result.empty());
+}
+
+TEST(AggregateByKeyTest, SumByParity) {
+    std::vector<int> input;
+    for (int i = 1; i <= 10; ++i) {
+        input.push_back(i);
+    }
+    auto result =
+        AsDataFlow(input)
+            | AggregateByKey(
+                0,
+                [](int x, int& sum) { sum += x; },
+                [](int x) { return (x % 2 == 0) ? std::string("even") : std::string("odd"); }
+            )
+            | AsVector();
+
+    ASSERT_THAT(result, ::testing::ElementsAre(
+        std::make_pair(std::string("odd"), 25),
+        std::make_pair(std::string("even"), 30)
+    ));
+}
+
+
