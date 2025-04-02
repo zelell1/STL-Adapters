@@ -67,7 +67,7 @@ private:
     Range& range_;
 
 public:
-    DropNulloptView(Range& range) : range_(range) {}
+    DropNulloptView(Range& range) : range_(range) {};
 
     auto begin() const {
         return DropNulloptIterator<Range>(range_);

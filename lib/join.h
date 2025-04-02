@@ -25,7 +25,7 @@ struct JoinResult {
 template <typename RhsRange, typename LhsPattern, typename RhsPattern>
 class JoinRanges {
 private:
-    RhsRange rhs_range_;
+    RhsRange& rhs_range_;
     LhsPattern lhs_pattern_;
     RhsPattern rhs_pattern_;
 
@@ -63,7 +63,7 @@ public:
 template <typename RhsRange>
 class JoinKV {
 private:
-    RhsRange rhs_range_;
+    RhsRange& rhs_range_;
 
 public:
     JoinKV(const RhsRange& range) : rhs_range_(range) {};

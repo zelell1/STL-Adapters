@@ -17,7 +17,8 @@ public:
     using reference = const value_type;
     using iterator_category = std::forward_iterator_tag;
 
-    FilterIterator(Range& range, const Pred& pred, bool end = false) : begin_(range.begin()), end_(range.end()), pred_(pred) {
+    FilterIterator(Range& range, const Pred& pred, bool end = false) : begin_(range.begin()), end_(range.end()), 
+    pred_(pred) {
         if (end) {
             begin_ = end_;
         }
