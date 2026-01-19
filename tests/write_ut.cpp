@@ -9,3 +9,11 @@ TEST(WriteTest, Write) {
     auto result = AsDataFlow(input) | Write(file_emulator, '|');
     ASSERT_EQ(file_emulator.str(), "1|2|3|4|5|");
 }
+
+TEST(WriteTest, EmptyInput) {
+    std::vector<int> input = {};
+    std::stringstream file_emulator;
+    auto result = AsDataFlow(input) | Write(file_emulator, '|');
+    ASSERT_EQ(file_emulator.str(), "");
+}
+

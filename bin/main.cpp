@@ -8,18 +8,18 @@
 */
 
 int main(int argc, char **argv) {
-  if(agrc != 2)
+  if(argc != 2)
     return 1;
   
 
   bool recursive = false;
   Dir(argv[1], recursive) 
-    | Filter([](std::filesystem::path& p){ return p.extension() == ".txt"; })
+    | Filter([](const std::filesystem::path& p){ return p.extension() == ".txt"; })
     | OpenFiles()
     | Split("\n ,.;")
     | Transform(
-        [](std::string& token) { 
-            std::transform(token.begin(), token.end(), [](char c){return std::tolower(c);});
+        [](std::string token) { 
+            std::transform(token.begin(), token.end(), token.begin(), [](char c){return std::tolower(c);});
             return token;
         })
     | AggregateByKey(
